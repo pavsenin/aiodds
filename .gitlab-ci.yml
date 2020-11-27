@@ -6,6 +6,7 @@ build-job:
 test-job:
   stage: test
   script:
+    - pip install requirements.txt
     - pytest .
 
 deploy-prod:
