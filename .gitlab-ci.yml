@@ -6,8 +6,8 @@ build-job:
 test-job:
   stage: test
   script:
-    - sudo pip3 install -r requirements.txt
-    - sudo pytest .
+    - pip3 install -r requirements.txt
+    - pytest .
 
 deploy-prod:
   stage: deploy
