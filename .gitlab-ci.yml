@@ -6,6 +6,7 @@ build-job:
 test-job:
   stage: test
   script:
+    - apt-get install python3-pip
     - pip install requirements.txt
     - pytest .
 
