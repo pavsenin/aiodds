@@ -1,3 +1,6 @@
+import logging, sys
+
+from inspect import stack
 from datetime import datetime
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
@@ -31,3 +34,21 @@ def retry(action, args, max_retry):
 
 def parse_tree(content):
     return BeautifulSoup(content, 'lxml')
+
+class Log:
+    def __init__(self):
+        formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.handlers = []
+        self.logger.addHandler(console_handler)
+        self.logger.propagate = False
+    def debug(self, message):
+        self.logger.debug(message)
+class Assert:
+    def equal(self, value1, value2):
+        assert value1 == value2
+    def empty_set(self, set1):
+        assert not bool(set1), f"{set1}"

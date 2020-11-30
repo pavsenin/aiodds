@@ -8,15 +8,24 @@ class BaseConfig(ABC):
         pass
     @property
     @abstractmethod
-    def DatabaseName(self):
+    def Database(self):
         pass
+    @property
+    def User(self):
+        return 'aspcapper'
+    @property
+    def Password(self):
+        return 'Asp11291109'
+    @property
+    def Host(self):
+        return '109.68.215.54'
 
 class LocalConfig(BaseConfig):
     @property
     def TimestampMultiplier(self):
         return 1
     @property
-    def DatabaseName(self):
+    def Database(self):
         return 'aioddsdb_test'
 
 class RemoteConfig(BaseConfig):
@@ -26,12 +35,12 @@ class RemoteConfig(BaseConfig):
 
 class TestConfig(RemoteConfig):
     @property
-    def DatabaseName(self):
+    def Database(self):
         return 'aioddsdb_test'
 
 class ProductionConfig(RemoteConfig):
     @property
-    def DatabaseName(self):
+    def Database(self):
         return 'aioddsdb'
 
 config = LocalConfig()

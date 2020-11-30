@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from scraping import MatchScraper
 
 def test_scrap_match():
     country, league, match_id = 'england', 'premier-league', 'drtdPJU9'
-    scraper = MatchScraper()
+    scraper = MatchScraper(from_time=None, to_time=None)
     match_info = scraper.scrap(country, league, match_id)
 
     assert match_info['match_id'] == match_id
@@ -39,3 +39,6 @@ def test_scrap_match():
     assert match_info['ahmin05_pin_closing_o2_coef'] == 2.39
     assert datetime.fromtimestamp(match_info['ahmin05_pin_opening_time']) == datetime(2020, 10, 30, 12, 21, 48)
     assert datetime.fromtimestamp(match_info['ahmin05_pin_closing_time']) == datetime(2020, 11, 8, 22, 12, 18)
+
+# def test_scrap_league():
+#     pass

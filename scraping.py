@@ -1,12 +1,16 @@
 import json
 from datetime import datetime
 from urllib.parse import unquote
+from abc import ABC, abstractmethod
 
 from constants import soccer_min_year, fetch_max_retry, bookmakers_map
 from constants import out_1x2_id, out_ou_id, out_ah_id, soccer_id, soccer_data_id
 from utils import retry, get_timestamp, parse_tree, fetch_url, fetch_url_oddsportal
 
 class MatchScraper:
+    def __init__(self, from_time, to_time):
+        self.from_time = from_time
+        self.to_time = to_time
     @staticmethod
     def correct_score(score, text):
         index = score.find(text)
@@ -77,6 +81,10 @@ class MatchScraper:
 
     def __do_time_filter(self, time):
         if str(time.year) < soccer_min_year:
+            return True
+        if self.from_time and time < self.from_time:
+            return True
+        if self.to_time and time > self.to_time:
             return True
         return False
 
@@ -158,15 +166,61 @@ class MatchScraper:
         self.__scrap_odds(match_info, matchID, xhash)
         return match_info
 
-class FutureMatchScraper(MatchScraper):
-    def __init__(self, from_time, to_time):
-        self.from_time = from_time
-        self.to_time = to_time
-    def __do_time_filter(self, time):
-        if super().__do_time_filter(time):
-            return True
-        if self.from_time and time < self.from_time:
-            return True
-        if self.to_time and time > self.to_time:
-            return True
+class BaseLeagueScraper(ABC):
+    def fetch_url(self, url):
+        league_url = f'https://fb.oddsportal.com{url}?_={get_timestamp()}'
+        content = fetch_url_oddsportal(league_url)
+        start_text, end_text = f"globals.jsonpCallback('{url}', ", ");"
+        i1, i2 = content.find(start_text) + len(start_text), content.rfind(end_text)
+        json_value = json.loads(content[i1:i2])
+        return json_value
+    def scrap_matches(self, scraper, country, league_name, match_ids):
+        matches = []
+        for match_id in match_ids:
+            match_info = scraper.scrap(country, league_name, match_id)
+            if self.skip_match_info(match_info):
+                continue
+            matches.append(match_info)
+        return matches
+    @abstractmethod
+    def scrap_match_ids(self, league_id):
+        pass
+    @abstractmethod
+    def skip_match_info(self, match_info):
+        pass
+
+class LeagueScraper(BaseLeagueScraper):
+    def scrap_match_ids(self, league_id):
+        page_num = 1
+        match_ids = []
+        while True:
+            league_data_url = f'/ajax-sport-country-tournament-archive/1/{league_id}/X0/1/0/{page_num}/'
+            json_value = self.fetch_url(league_data_url)
+            json_value = json_value['d']['html']
+            tree = parse_tree(json_value)
+            tbody_node = tree.find('html').find('body').find('table').find('tbody')
+            if tbody_node is None:
+                break
+            trs = tbody_node.find_all('tr')
+            new_match_ids = [tr['xeid'] for tr in trs if tr.has_attr('xeid')]
+            if len(new_match_ids) == 0:
+                break
+            match_ids.extend(new_match_ids)
+            page_num += 1
+        match_ids.reverse()
+        return match_ids
+    def skip_match_info(self, match_info):
+        if match_info is None:
+            raise ValueError('match_info is None')
         return False
+
+class FutureLeagueScraper(BaseLeagueScraper):
+    def scrap_match_ids(self, league_id):
+        league_data_url = f'/ajax-sport-country-tournament/1/{league_id}/X0/1/0/'
+        json_value = self.fetch_url(league_data_url)
+        json_value = json_value['d']['oddsData']
+        if json_value is None:
+            return []
+        return json_value.keys()
+    def skip_match_info(self, match_info):
+        return match_info is None
