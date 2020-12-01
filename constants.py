@@ -1,5 +1,6 @@
 soccer_min_year = '2012'
 fetch_max_retry = 10
+min_participate_matches = 8
 
 out_1x2_id, out_ou_id, out_ah_id = 1, 2, 5
 soccer_id, soccer_data_id = 1, 2

@@ -1,15 +1,13 @@
-import logging, sys
+import logging, sys, os
 
 from inspect import stack
 from datetime import datetime
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
+from abc import ABC, abstractmethod
 
 def get_timestamp():
     return int(datetime.now().timestamp())
-
-def get_timestamp_for_url(multiplier):
-    return str(get_timestamp()*multiplier)
 
 def fetch_url(url, headers=None):
     request = Request(url)
@@ -47,3 +45,13 @@ class Log:
         self.logger.propagate = False
     def debug(self, message):
         self.logger.debug(message)
+
+class OS(ABC):
+    @abstractmethod
+    def clear_ram(self): pass
+class Ubuntu(OS):
+    def clear_ram(self):
+        return os.system('sync; echo 1 > /proc/sys/vm/drop_caches')
+class Windows(OS):
+    def clear_ram(self):
+        return None

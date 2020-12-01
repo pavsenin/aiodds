@@ -34,7 +34,7 @@ class CurrentUpdater(BaseUpdater):
         future_ids = self.__select_match_ids('future_matches')
         self.update_core('current_matches', lambda scraped_ids: set(scraped_ids) - set(current_ids))
         current_ids_after = self.__select_match_ids('current_matches')
-        self.__debug_urls_from_ids('Non handled future', 'future_matches', (set(current_ids) | set(future_ids)) - set(current_ids_after))
+        self.__debug_urls_from_ids('Non-handled future', 'future_matches', (set(current_ids) | set(future_ids)) - set(current_ids_after))
         self.__debug_urls_from_ids('Unexpected current', 'current_matches', set(current_ids_after) - (set(current_ids) | set(future_ids)))
 
 class FutureUpdater(BaseUpdater):

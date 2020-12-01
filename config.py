@@ -1,46 +1,36 @@
-import os
+from utils import Ubuntu, Windows
 from abc import ABC, abstractmethod
 
 class BaseConfig(ABC):
-    @property    
-    @abstractmethod
-    def TimestampMultiplier(self):
-        pass
+    def __init__(self, os):
+        self.os = os
+    @property
+    def OS(self): return self.os
     @property
     @abstractmethod
-    def Database(self):
-        pass
+    def Database(self): pass
     @property
-    def User(self):
-        return 'aspcapper'
+    def User(self): return 'aspcapper'
     @property
-    def Password(self):
-        return 'Asp11291109'
+    def Password(self): return 'Asp11291109'
     @property
-    def Host(self):
-        return '109.68.215.54'
+    def Host(self): return '109.68.215.54'
 
 class LocalConfig(BaseConfig):
+    def __init__(self):
+        super().__init__(Windows())
     @property
-    def TimestampMultiplier(self):
-        return 1
-    @property
-    def Database(self):
-        return 'aioddsdb_test'
+    def Database(self): return 'aioddsdb_test'
 
 class RemoteConfig(BaseConfig):
-    @property
-    def TimestampMultiplier(self):
-        return 1000
-
+    def __init__(self):
+        super().__init__(Ubuntu())
 class TestConfig(RemoteConfig):
     @property
-    def Database(self):
-        return 'aioddsdb_test'
+    def Database(self): return 'aioddsdb_test'
 
 class ProductionConfig(RemoteConfig):
     @property
-    def Database(self):
-        return 'aioddsdb'
+    def Database(self): return 'aioddsdb'
 
-config = LocalConfig()
+config = TestConfig()
