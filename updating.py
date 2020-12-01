@@ -54,5 +54,5 @@ class CurrentUpdater(BaseUpdater):
 
 class FutureUpdater(BaseUpdater):
     def update(self):
-        self.db.execute(lambda conn: conn.cursor().execute(f"DELETE FROM future_matches;"))
+        self.db.execute(lambda conn: conn.cursor().execute(f"TRUNCATE TABLE future_matches RESTART IDENTITY;"))
         self.update_core('future_matches', lambda scraped_ids: scraped_ids)

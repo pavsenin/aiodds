@@ -251,14 +251,14 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
         all_data_prepared['target'] = all_data_prepared.apply(lambda row: 1 if row['real_outcome_o1x2'] == row['outcome_o1x2'] else 0, axis=1)
         all_data_prepared = all_data_prepared[prepared_columns]
 
-        all_data_prepared['time'] = all_data_prepared['time'].astype(np.float32).astype(np.int32)
+        all_data_prepared['time'] = all_data_prepared['time'].astype(np.int32)
         all_data_prepared['year'] = all_data_prepared['year'].astype(np.int32)
         all_data_prepared['month'] = all_data_prepared['month'].astype(np.int32)
         all_data_prepared['day'] = all_data_prepared['day'].astype(np.int32)
         all_data_prepared['hour'] = all_data_prepared['hour'].astype(np.int32)
         all_data_prepared['weekday'] = all_data_prepared['weekday'].astype(np.int32)
 
-        all_data_prepared['pin_mar_opening_time_diff'] = all_data_prepared['pin_mar_opening_time_diff'].astype(np.float32).astype(np.int32)
+        all_data_prepared['pin_mar_opening_time_diff'] = all_data_prepared['pin_mar_opening_time_diff'].astype(np.int32)
         all_data_prepared['pin_closing_prob_norm'] = all_data_prepared['pin_closing_prob_norm'].astype(np.float32)
 
         all_data_prepared['pin_opening_prob'] = all_data_prepared['pin_opening_prob'].astype(np.float32)
@@ -277,7 +277,7 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
             all_data_prepared[results_column] = all_data_prepared[results_column].astype(np.int32)
 
         for match_num_column in match_num_columns:
-            all_data_prepared[match_num_column] = all_data_prepared[match_num_column].astype(np.float32).astype(np.int32)
+            all_data_prepared[match_num_column] = all_data_prepared[match_num_column].astype(np.int32)
 
         for mean_column in mean_columns:
             all_data_prepared[mean_column] = all_data_prepared[mean_column].astype(np.float32)
@@ -314,7 +314,7 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
         log.debug(f"Archive matches {archive_matches.shape[0]}, current matches {current_matches.shape[0]}, future matches {future_matches.shape[0]}, all matches {all_matches.shape[0]}")
         del archive_matches, current_matches, future_matches
         gc.collect()
-        self.db.execute(lambda conn: conn.cursor().execute(f"DELETE FROM preprocessed_matches;"))
+        self.db.execute(lambda conn: conn.cursor().execute(f"TRUNCATE TABLE preprocessed_matches RESTART IDENTITY;"))
         divisions = [(country, league_name) for _, country, league_name, _ in current_seasons]
         num_matches = 0
         for country, league_name in divisions:
@@ -322,11 +322,12 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
             extracted = self.__extract_features(country, league_name, all_matches)
             inserted = self.__insert_preprocessed_matches(extracted)
             num_inserted = len(inserted)
-            self.log.debug(f"Preprocessed {country} {league_name} Extracted {extracted.shape} Inserted {num_inserted} for {time.time() - start_time} sec")
+            self.log.debug(f"Preprocessed {country} {league_name} Extracted {extracted.shape} Inserted {num_inserted} for {int(time.time() - start_time)} sec")
             assert extracted.shape[0] == num_inserted
             del extracted
             gc.collect()
             num_matches += num_inserted
+        return num_matches
 
 pd.options.mode.chained_assignment = None
 start_time = time.time()
@@ -335,4 +336,4 @@ log.debug(f"Clear RAM {config.OS.clear_ram()}")
 preprocessor = Preprocessor(db, log)
 log.debug('Preprocess matches')
 num_matches = preprocessor.preprocess()
-log.debug(f'Preprocessed {num_matches} matches for {time.time() - start_time} sec')
+log.debug(f'Preprocessed {num_matches} matches for {int(time.time() - start_time)} sec')
