@@ -296,11 +296,15 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
         return all_data_prepared
 
     def __insert_preprocessed_matches(self, matches):
-        columns = ', '.join([col for col in matches.columns.values])
-        insert_values = [self.db.join_values(row.values) for row in matches.rows()]
-        values_string = ', '.join([f'({values})' for values in insert_values])
-        insert_match_request = f"INSERT INTO preprocessed_matches ({columns}) VALUES {values_string} RETURNING id;"
-        return self.db.execute(insert_match_request)
+        def executor(conn):
+            columns = ', '.join([col for col in matches.columns.values])
+            insert_values = [self.db.join_values(row.values) for _, row in matches.iterrows()]
+            values_string = ', '.join([f'({values})' for values in insert_values])
+            insert_match_request = f"INSERT INTO preprocessed_matches ({columns}) VALUES {values_string} RETURNING id;"
+            cursor = conn.cursor()
+            cursor.execute(insert_match_request)
+            return cursor.fetchall()
+        return self.db.execute(executor)
 
     def preprocess(self):
         archive_matches = self.__select_matches('matches', 'leagues')
@@ -310,21 +314,25 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
         log.debug(f"Archive matches {archive_matches.shape[0]}, current matches {current_matches.shape[0]}, future matches {future_matches.shape[0]}, all matches {all_matches.shape[0]}")
         del archive_matches, current_matches, future_matches
         gc.collect()
-        self.db.execute(f"DELETE FROM preprocessed_matches;")
+        self.db.execute(lambda conn: conn.cursor().execute(f"DELETE FROM preprocessed_matches;"))
         divisions = [(country, league_name) for _, country, league_name, _ in current_seasons]
+        num_matches = 0
         for country, league_name in divisions:
             start_time = time.time()
-            extracted = self.__extract_features(all_matches, country, league_name)
+            extracted = self.__extract_features(country, league_name, all_matches)
             inserted = self.__insert_preprocessed_matches(extracted)
-            self.log.debug(f"Preprocessed {country} {league_name} Extracted {extracted.shape} Inserted {len(inserted)} for {time.time() - start_time} sec")
-            assert extracted.shape[0] == len(inserted)
+            num_inserted = len(inserted)
+            self.log.debug(f"Preprocessed {country} {league_name} Extracted {extracted.shape} Inserted {num_inserted} for {time.time() - start_time} sec")
+            assert extracted.shape[0] == num_inserted
             del extracted
             gc.collect()
+            num_matches += num_inserted
 
+pd.options.mode.chained_assignment = None
 start_time = time.time()
 db, log = DBProvider(), Log()
 log.debug(f"Clear RAM {config.OS.clear_ram()}")
 preprocessor = Preprocessor(db, log)
 log.debug('Preprocess matches')
-preprocessor.preprocess()
-log.debug(f'Preprocessed matches for {time.time() - start_time} sec')
+num_matches = preprocessor.preprocess()
+log.debug(f'Preprocessed {num_matches} matches for {time.time() - start_time} sec')

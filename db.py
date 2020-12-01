@@ -35,19 +35,3 @@ class DBProvider():
             cursor.execute(request)
             return cursor.fetchall()
         return self.execute(executor)
-
-    def insert_matches(self, table_name, league_id, matches):
-        int_league_id = self.select(f"SELECT id FROM current_leagues WHERE league_id = '{league_id}'")
-        int_league_id = int_league_id[0]['id']
-        inserted_matches = []
-        for match_info in matches:
-            columns = ', '.join(match_info.keys())
-            values = self.join_values(match_info.values())
-            def insert_executor(conn):
-                cursor = conn.cursor()
-                insert_match_request = f"INSERT INTO {table_name} (league_id, {columns}) VALUES ({int_league_id}, {values}) RETURNING match_id;"
-                cursor.execute(insert_match_request)
-                return cursor.fetchone()[0]
-            inserted = self.execute(insert_executor)
-            inserted_matches.append(inserted)
-        return inserted_matches
