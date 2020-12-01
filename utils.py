@@ -47,8 +47,3 @@ class Log:
         self.logger.propagate = False
     def debug(self, message):
         self.logger.debug(message)
-class Assert:
-    def equal(self, value1, value2):
-        assert value1 == value2
-    def empty_set(self, set1):
-        assert not bool(set1), f"{set1}"

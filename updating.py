@@ -14,21 +14,28 @@ class BaseUpdater:
             matches = self.scraper.scrap_matches(self.match_scraper, country, league_name, ids_to_scrap)
             inserted_ids = self.db.insert_matches(table_name, league_id, matches)
             all_inserted_ids.extend(inserted_ids)
-            self.log.debug(f"Updated {country}\t\t{league_name}\t\tInserted {len(inserted_ids)}")
+            self.log.debug(f"Updated {country} {league_name} Inserted {len(inserted_ids)}")
         self.log.debug(f"Total Inserted {len(all_inserted_ids)}")
 
 class CurrentUpdater(BaseUpdater):
-    def __init__(self, scraper, match_scraper, db, log, checker):
-        super().__init__(scraper, match_scraper, db, log)
-        self.checker = checker
     def __select_match_ids(self, table_name):
         return [row['match_id'] for row in self.db.select(f"SELECT match_id FROM {table_name}")]
+    def __debug_urls_from_ids(self, title_log, table_name, ids):
+        if len(list(ids)) == 0:
+            return
+        rows = self.db.select(f"SELECT CONCAT('https://www.oddsportal.com/soccer/', l.country, '/', l.league_name, '/', m.match_id, '/') AS url \
+            FROM {table_name} m JOIN current_leagues l ON l.id = m.league_id WHERE match_id IN ({self.db.join_values(ids)})")
+        if len(list(rows)) == 0:
+            return
+        self.log.debug(f"{title_log} {len(ids)}")
+        for row in rows: self.log.debug(row['url'])
     def update(self):
         current_ids = self.__select_match_ids('current_matches')
         future_ids = self.__select_match_ids('future_matches')
         self.update_core('current_matches', lambda scraped_ids: set(scraped_ids) - set(current_ids))
         current_ids_after = self.__select_match_ids('current_matches')
-        self.checker.empty_set((set(current_ids) | set(future_ids)) - set(current_ids_after))
+        self.__debug_urls_from_ids('Non handled future', 'future_matches', (set(current_ids) | set(future_ids)) - set(current_ids_after))
+        self.__debug_urls_from_ids('Unexpected current', 'current_matches', set(current_ids_after) - (set(current_ids) | set(future_ids)))
 
 class FutureUpdater(BaseUpdater):
     def update(self):
