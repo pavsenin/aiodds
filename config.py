@@ -1,4 +1,4 @@
-import os
+import os, subprocess
 from abc import ABC, abstractmethod
 
 class OS(ABC):
@@ -8,9 +8,9 @@ class OS(ABC):
     def copy_file(self, source, target): pass
 class Ubuntu(OS):
     def clear_ram(self):
-        return os.system('sync; echo 1 > /proc/sys/vm/drop_caches')
+        return subprocess.check_output('sync; echo 1 > /proc/sys/vm/drop_caches', shell=False)
     def copy_file(self, source, target):
-        return os.system(f'yes | cp -rf {source} {target}')
+        return subprocess.check_output(f'yes | cp -rf {source} {target}', shell=False)
 class Windows(OS):
     def clear_ram(self):
         return None
