@@ -13,9 +13,9 @@ class Ubuntu(OS):
         return subprocess.check_output(f'yes | cp -rf {source} {target}', shell=True)
 class Windows(OS):
     def clear_ram(self):
-        return None
+        return b''
     def copy_file(self, source, target):
-        return None
+        return b''
 
 class BaseConfig(ABC):
     def __init__(self, os):
