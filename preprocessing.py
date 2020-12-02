@@ -7,7 +7,6 @@ from itertools import product
 from utils import Log
 from db import DBProvider
 from constants import current_seasons, min_participate_matches
-from config import config
 
 class Preprocessor:
     def __init__(self, db, log):
@@ -307,11 +306,12 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
         return self.db.execute(executor)
 
     def preprocess(self):
+        pd.options.mode.chained_assignment = None
         archive_matches = self.__select_matches('matches', 'leagues')
         current_matches = self.__select_matches('current_matches', 'current_leagues')
         future_matches = self.__select_matches('future_matches', 'current_leagues')
         all_matches = pd.concat([archive_matches, current_matches, future_matches], ignore_index=True)
-        log.debug(f"Archive matches {archive_matches.shape[0]}, current matches {current_matches.shape[0]}, future matches {future_matches.shape[0]}, all matches {all_matches.shape[0]}")
+        self.log.debug(f"Archive matches {archive_matches.shape[0]}, current matches {current_matches.shape[0]}, future matches {future_matches.shape[0]}, all matches {all_matches.shape[0]}")
         del archive_matches, current_matches, future_matches
         gc.collect()
         self.db.execute(lambda conn: conn.cursor().execute(f"TRUNCATE TABLE preprocessed_matches RESTART IDENTITY;"))
@@ -328,12 +328,3 @@ FROM """ + matches_name + " m JOIN " + leagues_name + " l ON l.id = m.league_id 
             gc.collect()
             num_matches += num_inserted
         return num_matches
-
-pd.options.mode.chained_assignment = None
-start_time = time.time()
-db, log = DBProvider(), Log()
-log.debug(f"Clear RAM {config.OS.clear_ram()}")
-preprocessor = Preprocessor(db, log)
-log.debug('Preprocess matches')
-num_matches = preprocessor.preprocess()
-log.debug(f'Preprocessed {num_matches} matches for {int(time.time() - start_time)} sec')

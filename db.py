@@ -1,6 +1,6 @@
 
 import psycopg2, psycopg2.extras
-from config import config
+from config_provider import config
 
 class DBProvider():
     def __init__(self):

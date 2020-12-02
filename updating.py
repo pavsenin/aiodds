@@ -6,7 +6,7 @@ class BaseUpdater:
         self.match_scraper = match_scraper
         self.db = db
         self.log = log
-    def insert_matches(self, table_name, league_id, matches):
+    def __insert_matches(self, table_name, league_id, matches):
         int_league_id = self.db.select(f"SELECT id FROM current_leagues WHERE league_id = '{league_id}'")
         int_league_id = int_league_id[0]['id']
         inserted_matches = []
@@ -27,7 +27,7 @@ class BaseUpdater:
             scraped_ids = self.scraper.scrap_match_ids(league_id)
             ids_to_scrap = get_ids_to_scrap(scraped_ids)
             matches = self.scraper.scrap_matches(self.match_scraper, country, league_name, ids_to_scrap)
-            inserted_ids = self.db.insert_matches(table_name, league_id, matches)
+            inserted_ids = self.__insert_matches(table_name, league_id, matches)
             all_inserted_ids.extend(inserted_ids)
             self.log.debug(f"Updated {country} {league_name} Inserted {len(inserted_ids)}")
         self.log.debug(f"Total Inserted {len(all_inserted_ids)}")
