@@ -8,9 +8,9 @@ class OS(ABC):
     def copy_file(self, source, target): pass
 class Ubuntu(OS):
     def clear_ram(self):
-        return subprocess.check_output('sync; echo 1 > /proc/sys/vm/drop_caches', shell=False)
+        return subprocess.check_output('sync; echo 1 > /proc/sys/vm/drop_caches', shell=True)
     def copy_file(self, source, target):
-        return subprocess.check_output(f'yes | cp -rf {source} {target}', shell=False)
+        return subprocess.check_output(f'yes | cp -rf {source} {target}', shell=True)
 class Windows(OS):
     def clear_ram(self):
         return None
