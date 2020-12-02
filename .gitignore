@@ -1,4 +1,3 @@
 __pycache__/
 .pytest_cache/
 .ropeproject/
-config_provider.py
