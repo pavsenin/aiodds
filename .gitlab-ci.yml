@@ -11,4 +11,4 @@ test-job:
 deploy-prod:
   stage: deploy
   script:
-    - python3 -u publish.py
+    - python3 -u publish.py | python3 -u publish_bot.py
