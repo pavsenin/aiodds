@@ -1,13 +1,24 @@
 import logging, sys, os
+import numpy as np
 
+from math import isclose
 from logging import handlers
 from datetime import datetime
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 from abc import ABC, abstractmethod
 
+min_int = -2**31
+
 def get_timestamp():
     return int(datetime.now().timestamp())
+
+def equal(value1, value2):
+    if np.isnan(value1) and np.isnan(value2):
+        return
+    if isclose(value1, value2, rel_tol=1e-5):
+        return
+    assert value1 == value2
 
 def fetch_url(url, headers=None):
     request = Request(url)
@@ -32,6 +43,19 @@ def retry(action, args, max_retry):
 
 def parse_tree(content):
     return BeautifulSoup(content, 'lxml')
+
+def is_invalid(value):
+    return value is None or np.isnan(value)
+def get_outcome_o1x2(row):
+    if row['was_extra']:
+        return 'o0'
+    if is_invalid(row['score_home']) or is_invalid(row['score_away']):
+        return 'o0'
+    if row['score_home'] > row['score_away']:
+        return 'o1'
+    if row['score_home'] < row['score_away']:
+        return 'o2'
+    return 'o0'
 
 class Log:
     def __init__(self, config, log_name):

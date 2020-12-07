@@ -1,2 +1,2 @@
-from config import TestConfig
-config = TestConfig()
+from config import LocalConfig
+config = LocalConfig()

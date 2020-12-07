@@ -9,6 +9,7 @@ bookmakers_map = {
     '18': 'pin', '381': 'mar', '15': 'wh', '75': 'sbo', '147': 'dafa', '454': 'win',
     '2': 'bwin', '429': 'bf', '16': 'b365', '56': '188', '476': 'asi', '417': '1x'
 }
+pin_name = 'pin'
 
 current_seasons = [
     ('2020', 'england', 'premier-league', 'AJuiuwWt'),
